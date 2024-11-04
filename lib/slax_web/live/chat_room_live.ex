@@ -73,7 +73,7 @@ defmodule SlaxWeb.ChatRoomLive do
     room =
       case Map.fetch(params, "id") do
         {:ok, id} -> Chat.get_room!(id)
-        :error -> Chat.get_first_room!(socket.assigns.rooms)
+        :error -> Chat.get_first_room!()
       end
 
     { :noreply, assign(socket, room: room, hidden_topic?: false, page_title: "#" <> room.name ) }
