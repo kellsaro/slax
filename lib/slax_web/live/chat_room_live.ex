@@ -1,7 +1,7 @@
 defmodule SlaxWeb.ChatRoomLive do
   use SlaxWeb, :live_view
 
-  alias Slax.Repo
+  alias Slax.Chat
   alias Slax.Chat.Room
 
   def render(assigns) do
@@ -47,24 +47,6 @@ defmodule SlaxWeb.ChatRoomLive do
     """
   end
 
-  def mount(_params, _session, socket) do
-    { :ok, assign(socket, rooms: Repo.all(Room)) }
-  end
-
-  def handle_event("toggle-topic", _unsigned_params, socket) do
-    { :noreply, update(socket, :hidden_topic?, &(!&1)) }
-  end
-
-  def handle_params(params, _uri, socket) do
-    room =
-      case Map.fetch(params, "id") do
-        {:ok, id} -> Repo.get!(Room, id) # TODO: Investigate why Enum.find(rooms, &(&1.id == id)) doesn't work
-        :error -> List.first(socket.assigns.rooms)
-      end
-
-    { :noreply, assign(socket, room: room, hidden_topic?: false) }
-  end
-
   attr :active, :boolean, required: true
   attr :room, Room, required: true
   defp room_link(assigns) do
@@ -81,5 +63,23 @@ defmodule SlaxWeb.ChatRoomLive do
       </span>
     </.link>
     """
+  end
+
+  def mount(_params, _session, socket) do
+    { :ok, assign(socket, rooms: Chat.list_rooms()) }
+  end
+
+  def handle_params(params, _uri, socket) do
+    room =
+      case Map.fetch(params, "id") do
+        {:ok, id} -> Chat.get_room!(id)
+        :error -> Chat.get_first_room!(socket.assigns.rooms)
+      end
+
+    { :noreply, assign(socket, room: room, hidden_topic?: false) }
+  end
+
+  def handle_event("toggle-topic", _unsigned_params, socket) do
+    { :noreply, update(socket, :hidden_topic?, &(!&1)) }
   end
 end
