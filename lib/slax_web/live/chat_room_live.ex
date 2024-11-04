@@ -47,13 +47,16 @@ defmodule SlaxWeb.ChatRoomLive do
     """
   end
 
-  def mount(_params, _session, socket) do
+  def mount(params, _session, socket) do
     rooms =
       Room
       |> Repo.all()
+
     room =
-      rooms
-      |> List.first()
+      case Map.fetch(params, "id") do
+        {:ok, id} -> Repo.get!(Room, id) # TODO Investigate why Enum.find(rooms, &(&1.id == id)) doesn't work
+        :error -> List.first(rooms)
+      end
 
     { :ok, assign(socket, room: room, hidden_topic?: false, rooms: rooms) }
   end
@@ -71,7 +74,7 @@ defmodule SlaxWeb.ChatRoomLive do
         "flex items-center h-8 text-sm pl-8 pr-3",
         (@active && "bg-slate-300") || "hover:bg-slate-300"
       ]}
-      href="#">
+      href={~p"/rooms/#{@room}"}>
       <.icon name="hero-hashtag" class="h4 w-4" />
       <span class={["ml-2 leading-nonde", @active && "font-bold"]}>
         <%= @room.name %>
