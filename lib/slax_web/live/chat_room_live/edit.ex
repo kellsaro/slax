@@ -59,7 +59,7 @@ defmodule SlaxWeb.ChatRoomLive.Edit do
       {:ok, room} ->
         {:noreply,
           socket
-          |> put_flash(:into, "Room updated successfully")
+          |> put_flash(:info, "Room updated successfully")
           |> push_navigate(to: ~p"/rooms/#{room}")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
