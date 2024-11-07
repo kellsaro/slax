@@ -192,6 +192,23 @@ defmodule SlaxWeb.ChatRoomLive do
     {:noreply, assign_message_form(socket, changeset)}
   end
 
+  def handle_event("submit-message", %{"message" => message_params}, socket) do
+    %{current_user: current_user, room: room} = socket.assigns
+
+    socket =
+      case Chat.create_message(room, message_params, current_user) do
+        {:ok, message} ->
+          socket
+          |> update(:messages, &(&1 ++ [message]))
+          |> assign_message_form(Chat.change_message(%Message{}))
+
+        {:error, changeset} ->
+          assign_message_form(socket, changeset)
+      end
+
+    {:noreply, socket}
+  end
+
   defp assign_message_form(socket, changeset) do
     assign(socket, :new_message_form, to_form(changeset))
   end
