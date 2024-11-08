@@ -21,10 +21,7 @@ defmodule SlaxWeb.ChatRoomLive do
           </span>
         </div>
         <div id="rooms-list">
-          <.room_link
-            :for={room <- @rooms}
-            room={room}
-            active={room.id == @room.id} />
+          <.room_link :for={room <- @rooms} room={room} active={room.id == @room.id} />
         </div>
       </div>
     </div>
@@ -32,8 +29,10 @@ defmodule SlaxWeb.ChatRoomLive do
       <div class="flex justify-between items-center flex-shrink-0 h-16 bg-white border-b border-slate-300 px-4">
         <div class="flex flex-col gap-1.5">
           <h1 class="text-sm font-bold leading-none">
-            <.link class="font-normal text-xs text-blue-600 hover:text-blue-700"
-              navigate={~p"/rooms/#{@room}/edit"}>
+            <.link
+              class="font-normal text-xs text-blue-600 hover:text-blue-700"
+              navigate={~p"/rooms/#{@room}/edit"}
+            >
               #<%= @room.name %>
             </.link>
           </h1>
@@ -41,7 +40,7 @@ defmodule SlaxWeb.ChatRoomLive do
             <%= if @hidden_topic? do %>
               <span class="text-slate-600">[Topic hidden]</span>
             <% else %>
-            <span class="text-slate-600"><%= @room.topic %></span>
+              <span class="text-slate-600"><%= @room.topic %></span>
             <% end %>
           </div>
         </div>
@@ -98,7 +97,8 @@ defmodule SlaxWeb.ChatRoomLive do
           for={@new_message_form}
           phx-change="validate-message"
           phx-submit="submit-message"
-          class="flex items-center border-2 border-slate-300 rounded-sm p-1">
+          class="flex items-center border-2 border-slate-300 rounded-sm p-1"
+        >
           <textarea
             class="flex-grow text-sm px-3 border-l border-slate-300 mx-1 resize-none"
             cols=""
@@ -119,6 +119,7 @@ defmodule SlaxWeb.ChatRoomLive do
 
   attr :active, :boolean, required: true
   attr :room, Room, required: true
+
   defp room_link(assigns) do
     ~H"""
     <.link
@@ -126,7 +127,8 @@ defmodule SlaxWeb.ChatRoomLive do
         "flex items-center h-8 text-sm pl-8 pr-3",
         (@active && "bg-slate-300") || "hover:bg-slate-300"
       ]}
-      patch={~p"/rooms/#{@room}"}>
+      patch={~p"/rooms/#{@room}"}
+    >
       <.icon name="hero-hashtag" class="h4 w-4" />
       <span class={["ml-2 leading-nonde", @active && "font-bold"]}>
         <%= @room.name %>
@@ -135,7 +137,9 @@ defmodule SlaxWeb.ChatRoomLive do
     """
   end
 
+  attr :dom_id, :string, required: true
   attr :message, Message, required: true
+
   defp message(assigns) do
     ~H"""
     <div id={@dom_id} class="relative flex px-4 py-3">
@@ -145,6 +149,8 @@ defmodule SlaxWeb.ChatRoomLive do
           <.link class="text-sm font-semibold hover:underline">
             <span><%= username(@message.user) %></span>
           </.link>
+          <span class="ml-1 text-xs text-gray-500"><%= message_timestamp(@message) %></span>
+
           <p class="text-sm"><%= @message.body %></p>
         </div>
       </div>
@@ -159,8 +165,13 @@ defmodule SlaxWeb.ChatRoomLive do
     |> String.capitalize()
   end
 
+  defp message_timestamp(message) do
+    message.inserted_at
+    |> Timex.format!("%Y/%m/%d %-l:%M %p", :strftime)
+  end
+
   def mount(_params, _session, socket) do
-    { :ok, assign(socket, rooms: Chat.list_rooms()) }
+    {:ok, assign(socket, rooms: Chat.list_rooms())}
   end
 
   def handle_params(params, _uri, socket) do
@@ -172,20 +183,19 @@ defmodule SlaxWeb.ChatRoomLive do
 
     messages = Chat.list_messages_in_room(room)
 
-    { :noreply,
-      socket
-      |> assign(
-          room: room,
-          hidden_topic?: false,
-          page_title: "#" <> room.name
-      )
-      |> stream(:messages, messages, reset: true)
-      |> assign_message_form(Chat.change_message(%Message{}))
-    }
+    {:noreply,
+     socket
+     |> assign(
+       room: room,
+       hidden_topic?: false,
+       page_title: "#" <> room.name
+     )
+     |> stream(:messages, messages, reset: true)
+     |> assign_message_form(Chat.change_message(%Message{}))}
   end
 
   def handle_event("toggle-topic", _unsigned_params, socket) do
-    { :noreply, update(socket, :hidden_topic?, &(!&1)) }
+    {:noreply, update(socket, :hidden_topic?, &(!&1))}
   end
 
   def handle_event("validate-message", %{"message" => message_params}, socket) do
