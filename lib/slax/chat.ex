@@ -1,4 +1,5 @@
 defmodule Slax.Chat do
+  alias Slax.Accounts.User
   alias Slax.Chat.{Message, Room}
   alias Slax.Repo
 
@@ -9,7 +10,8 @@ defmodule Slax.Chat do
   end
 
   def get_room!(id) do
-    Repo.get!(Room, id) # TODO: Investigate why Enum.find(rooms, &(&1.id == id)) doesn't work
+    # TODO: Investigate why Enum.find(rooms, &(&1.id == id)) doesn't work
+    Repo.get!(Room, id)
   end
 
   def list_rooms do
@@ -49,5 +51,11 @@ defmodule Slax.Chat do
     %Message{room: room, user: user}
     |> Message.changeset(attrs)
     |> Repo.insert()
+  end
+
+  def delete_message_by_id(id, %User{id: user_id}) do
+    message = %Message{user_id: ^user_id} = Repo.get(Message, id)
+
+    Repo.delete(message)
   end
 end
